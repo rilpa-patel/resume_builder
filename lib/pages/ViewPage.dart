@@ -22,20 +22,19 @@ class ViewPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                                          children: [
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
                         Expanded(
                             child: Text(
                           resumeItems[index].title,
                           style:
-                              const TextStyle(color: Colors.blue, fontSize: 23),
+                              const TextStyle(color: Colors.blue, fontSize: 20),
                         )),
                         Expanded(child: Text(resumeItems[index].content))
-                                          ],
-                                        ),
-                      ));
-                  
+                      ],
+                    ),
+                  ));
                 },
               );
             } else {
@@ -49,6 +48,19 @@ class ViewPage extends StatelessWidget {
             );
           }
         },
+      ),
+      bottomNavigationBar: ElevatedButton(
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        style: ElevatedButton.styleFrom(
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          padding: EdgeInsets.fromLTRB(26, 10, 26, 10),
+        ),
+        child: const Text('Edit Resume'),
       ),
     );
   }

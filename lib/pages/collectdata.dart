@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:resumebuilder/services/data.dart';
 import 'ViewPage.dart';
@@ -14,8 +16,7 @@ class _CollectDataState extends State<CollectData> {
   List<ResumeItem> resumeItems = [];
   TextEditingController titleController = TextEditingController();
   TextEditingController contentController = TextEditingController();
-    int? editingIndex;
-
+  int? editingIndex;
 
   @override
   void initState() {
@@ -36,8 +37,6 @@ class _CollectDataState extends State<CollectData> {
       });
     }
   }
-
-  
 
   _saveResumeItems() async {
     DataStorage dataStorage = DataStorage();
@@ -69,17 +68,18 @@ class _CollectDataState extends State<CollectData> {
                               children: <TextSpan>[
                                 TextSpan(
                                   text: resumeItems[index].content,
-                                  style: const TextStyle(fontStyle: FontStyle.italic),
+                                  style: const TextStyle(
+                                      fontStyle: FontStyle.italic),
                                 ),
                               ]),
                         ),
                       ),
                       IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _startEditing(index);
-                          },
-                        ),
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          _startEditing(index);
+                        },
+                      ),
                       IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
@@ -89,13 +89,25 @@ class _CollectDataState extends State<CollectData> {
                           });
                         },
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_upward),
+                        onPressed: () {
+                          _moveItem(index, -1);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_downward),
+                        onPressed: () {
+                          _moveItem(index, 1);
+                        },
+                      )
                     ],
                   ),
                 );
               },
             ),
           ),
-           Padding(
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
@@ -120,6 +132,13 @@ class _CollectDataState extends State<CollectData> {
                         onPressed: () {
                           _addResumeItem();
                         },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          padding: EdgeInsets.fromLTRB(26, 10, 26, 10),
+                        ),
                         child: const Text('Add'),
                       )
                     else
@@ -127,12 +146,26 @@ class _CollectDataState extends State<CollectData> {
                         onPressed: () {
                           _updateResumeItem();
                         },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          padding: EdgeInsets.fromLTRB(26, 10, 26, 10),
+                        ),
                         child: const Text('Edit'),
                       ),
                     ElevatedButton(
                       onPressed: () {
                         _clearFields();
                       },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        padding: EdgeInsets.all(10),
+                      ),
                       child: const Text('Clear All'),
                     ),
                   ],
@@ -140,30 +173,55 @@ class _CollectDataState extends State<CollectData> {
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              _viewResume();
-            },
-            child: const Text('View Resume'),
-          ),
+          
         ],
       ),
+      bottomNavigationBar: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ViewPage(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              padding: EdgeInsets.all(10),
+            ),
+            child: const Text('View Resume'),
+          ),
     );
   }
 
-  void _addResumeItem() {
+  void _moveItem(int fromIndex, int offset) {
     setState(() {
-      resumeItems.add(
-        ResumeItem(
-          title: titleController.text,
-          content: contentController.text,
-        ),
-      );
-      _clearFields();
-      _saveResumeItems();
+      if (fromIndex + offset >= 0 && fromIndex + offset < resumeItems.length) {
+        final movedItem = resumeItems.removeAt(fromIndex);
+        resumeItems.insert(fromIndex + offset, movedItem);
+        _saveResumeItems();
+      }
     });
   }
-    void _updateResumeItem() {
+
+  void _addResumeItem() {
+  //  log(resumeItems.toString());
+      setState(() {
+        resumeItems.add(
+          ResumeItem(
+            title: titleController.text,
+            content: contentController.text,
+          ),
+        );
+        _clearFields();
+        _saveResumeItems();
+      });
+  }
+
+  void _updateResumeItem() {
     setState(() {
       if (editingIndex != null) {
         resumeItems[editingIndex!] = ResumeItem(
@@ -189,26 +247,6 @@ class _CollectDataState extends State<CollectData> {
       editingIndex = null;
       titleController.clear();
       contentController.clear();
-    });
-  }
-
-  void _viewResume() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ViewPage(),
-      ),
-    );
-  }
-
-  void _moveItem(int fromIndex, int offset) {
-    setState(() {
-      if (fromIndex + offset >= 0 &&
-          fromIndex + offset < resumeItems.length) {
-        final movedItem = resumeItems.removeAt(fromIndex);
-        resumeItems.insert(fromIndex + offset, movedItem);
-        _saveResumeItems();
-      }
     });
   }
 }
