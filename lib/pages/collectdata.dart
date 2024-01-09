@@ -14,6 +14,8 @@ class _CollectDataState extends State<CollectData> {
   List<ResumeItem> resumeItems = [];
   TextEditingController titleController = TextEditingController();
   TextEditingController contentController = TextEditingController();
+    int? editingIndex;
+
 
   @override
   void initState() {
@@ -35,15 +37,7 @@ class _CollectDataState extends State<CollectData> {
     }
   }
 
-  _editFiled(int index) async {
-    DataStorage dataStorage = DataStorage();
-    List<String>? titles = await dataStorage.readTitels();
-    List<String>? contents = await dataStorage.readContant();
-    setState(() {
-      titleController.text = titles![index];
-      contentController.text = contents![index];
-    });
-  }
+  
 
   _saveResumeItems() async {
     DataStorage dataStorage = DataStorage();
@@ -54,7 +48,7 @@ class _CollectDataState extends State<CollectData> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Resume Builder'),
+        title: const Text('Resume Builder'),
       ),
       body: Column(
         children: [
@@ -62,90 +56,84 @@ class _CollectDataState extends State<CollectData> {
             child: ListView.builder(
               itemCount: resumeItems.length,
               itemBuilder: (context, index) {
-                return Row(
-                  children: [
-                    Expanded(child: Text(resumeItems[index].title)),
-                    Expanded(
-                      child: RichText(
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                            style: DefaultTextStyle.of(context).style,
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: resumeItems[index].content,
-                                style: TextStyle(fontStyle: FontStyle.italic),
-                              ),
-                            ]),
+                return Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(resumeItems[index].title)),
+                      Expanded(
+                        child: RichText(
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                              style: DefaultTextStyle.of(context).style,
+                              children: <TextSpan>[
+                                TextSpan(
+                                  text: resumeItems[index].content,
+                                  style: const TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ]),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        setState(() async {
-                          resumeItems.removeAt(index);
-                          _editFiled(index);
-                          _saveResumeItems();
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        setState(() {
-                          resumeItems.removeAt(index);
-                          _saveResumeItems();
-                        });
-                      },
-                    ),
-                  ],
+                      IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            _startEditing(index);
+                          },
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          setState(() {
+                            resumeItems.removeAt(index);
+                            _saveResumeItems();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
           ),
-          Padding(
+           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Title',
                   ),
                 ),
                 TextField(
                   controller: contentController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Content',
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    if (editingIndex == null)
+                      ElevatedButton(
+                        onPressed: () {
+                          _addResumeItem();
+                        },
+                        child: const Text('Add'),
+                      )
+                    else
+                      ElevatedButton(
+                        onPressed: () {
+                          _updateResumeItem();
+                        },
+                        child: const Text('Edit'),
+                      ),
                     ElevatedButton(
                       onPressed: () {
-                        setState(() {
-                          resumeItems.add(
-                            ResumeItem(
-                              title: titleController.text,
-                              content: contentController.text,
-                            ),
-                          );
-                          titleController.clear();
-                          contentController.clear();
-                          _saveResumeItems();
-                        });
+                        _clearFields();
                       },
-                      child: Text('Add'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          resumeItems.clear();
-                          _saveResumeItems();
-                        });
-                      },
-                      child: Text('Clear All'),
+                      child: const Text('Clear All'),
                     ),
                   ],
                 ),
@@ -156,19 +144,71 @@ class _CollectDataState extends State<CollectData> {
             onPressed: () {
               _viewResume();
             },
-            child: Text('View Resume'),
+            child: const Text('View Resume'),
           ),
         ],
       ),
     );
   }
 
+  void _addResumeItem() {
+    setState(() {
+      resumeItems.add(
+        ResumeItem(
+          title: titleController.text,
+          content: contentController.text,
+        ),
+      );
+      _clearFields();
+      _saveResumeItems();
+    });
+  }
+    void _updateResumeItem() {
+    setState(() {
+      if (editingIndex != null) {
+        resumeItems[editingIndex!] = ResumeItem(
+          title: titleController.text,
+          content: contentController.text,
+        );
+        _clearFields();
+        _saveResumeItems();
+      }
+    });
+  }
+
+  void _startEditing(int index) {
+    setState(() {
+      editingIndex = index;
+      titleController.text = resumeItems[index].title;
+      contentController.text = resumeItems[index].content;
+    });
+  }
+
+  void _clearFields() {
+    setState(() {
+      editingIndex = null;
+      titleController.clear();
+      contentController.clear();
+    });
+  }
+
   void _viewResume() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ViewPage(),
+        builder: (context) => const ViewPage(),
       ),
     );
+  }
+
+  void _moveItem(int fromIndex, int offset) {
+    setState(() {
+      if (fromIndex + offset >= 0 &&
+          fromIndex + offset < resumeItems.length) {
+        final movedItem = resumeItems.removeAt(fromIndex);
+        resumeItems.insert(fromIndex + offset, movedItem);
+        _saveResumeItems();
+      }
+    });
   }
 }
