@@ -1,17 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:resumebuilder/services/data.dart';
 import 'ViewPage.dart';
 import '../models/ResumeItem.dart';
 
 class CollectData extends StatefulWidget {
+  const CollectData({super.key});
+
   @override
   _CollectDataState createState() => _CollectDataState();
 }
 
 class _CollectDataState extends State<CollectData> {
   List<ResumeItem> resumeItems = [];
-
   TextEditingController titleController = TextEditingController();
   TextEditingController contentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadResumeItems();
+  }
+
+  _loadResumeItems() async {
+    DataStorage dataStorage = DataStorage();
+    List<String>? titles = await dataStorage.readTitels();
+    List<String>? contents = await dataStorage.readContant();
+
+    if (titles != null && contents != null) {
+      setState(() {
+        for (int i = 0; i < titles.length; i++) {
+          resumeItems.add(ResumeItem(title: titles[i], content: contents[i]));
+        }
+      });
+    }
+  }
+
+  _editFiled(int index) async {
+    DataStorage dataStorage = DataStorage();
+    List<String>? titles = await dataStorage.readTitels();
+    List<String>? contents = await dataStorage.readContant();
+    setState(() {
+      titleController.text = titles![index];
+      contentController.text = contents![index];
+    });
+  }
+
+  _saveResumeItems() async {
+    DataStorage dataStorage = DataStorage();
+    await dataStorage.StoreData(resumeItems);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,17 +62,42 @@ class _CollectDataState extends State<CollectData> {
             child: ListView.builder(
               itemCount: resumeItems.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(resumeItems[index].title),
-                  subtitle: Text(resumeItems[index].content),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      setState(() {
-                        resumeItems.removeAt(index);
-                      });
-                    },
-                  ),
+                return Row(
+                  children: [
+                    Expanded(child: Text(resumeItems[index].title)),
+                    Expanded(
+                      child: RichText(
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                            style: DefaultTextStyle.of(context).style,
+                            children: <TextSpan>[
+                              TextSpan(
+                                text: resumeItems[index].content,
+                                style: TextStyle(fontStyle: FontStyle.italic),
+                              ),
+                            ]),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () {
+                        setState(() async {
+                          resumeItems.removeAt(index);
+                          _editFiled(index);
+                          _saveResumeItems();
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        setState(() {
+                          resumeItems.removeAt(index);
+                          _saveResumeItems();
+                        });
+                      },
+                    ),
+                  ],
                 );
               },
             ),
@@ -71,6 +133,7 @@ class _CollectDataState extends State<CollectData> {
                           );
                           titleController.clear();
                           contentController.clear();
+                          _saveResumeItems();
                         });
                       },
                       child: Text('Add'),
@@ -79,6 +142,7 @@ class _CollectDataState extends State<CollectData> {
                       onPressed: () {
                         setState(() {
                           resumeItems.clear();
+                          _saveResumeItems();
                         });
                       },
                       child: Text('Clear All'),
